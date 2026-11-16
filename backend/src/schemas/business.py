@@ -38,3 +38,23 @@ class ReviewInput(BaseModel):
  title:str=Field(min_length=2,max_length=100)
  finding:str=Field(min_length=8,max_length=2000)
  action:str=Field(min_length=8,max_length=2000)
+
+class PlanParams(BaseModel):
+ capacity_per_machine:float=Field(gt=0,le=100000,allow_inf_nan=False,description='单台空压机每小时供气上限 m³/min')
+ startup_kwh:float=Field(ge=0,le=1000000,allow_inf_nan=False,description='每增开一台的启动耗电 kWh')
+ initial_machines:int=Field(ge=0,le=50)
+ max_starts:int=Field(ge=0,le=500,description='整段允许的增开总台次上限')
+class PlanInput(BaseModel):
+ name:str=Field(min_length=2,max_length=120)
+ model_run_id:int=Field(gt=0)
+ rows:list[dict]=Field(min_length=1,max_length=5000)
+ params:PlanParams
+class PlanReschedule(BaseModel):
+ name:str=Field(default='',max_length=120)
+ rows:list[dict]|None=Field(default=None,max_length=5000)
+ params:PlanParams|None=None
+ @field_validator('rows')
+ @classmethod
+ def present(cls,v):
+  if v is not None and not v:raise ValueError('提供 rows 时必须至少一行；仅改参数请省略 rows')
+  return v
